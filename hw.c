@@ -40,7 +40,12 @@ void showptable(){
 
 }
 
-int main(int argc, char* argv[]){
+int main(int argc, char* arg[]){
+    //init algorithm
+    bool algo_fifo = true;
+    if(strcmp(arg[0], "LRU") == 0){
+        algo_fifo = false;
+    }
     struct VirtualMemory virtualMemory;
     struct DiskMemory diskMemory;
     struct MainMemory mainMemory;
@@ -85,22 +90,25 @@ int main(int argc, char* argv[]){
         //commands
         if(strcmp(argv[0], "quit") == 0){
             break;
-        }else if(strcmp(argv[0], "read") == 0){
-            //argv[1] should be int
-            read_addy(0);
-        }else if(strcmp(argv[0], "write") == 0){
-            //argv[1] and argv[2] should be ints
-            write_addy(0, 0);
-        }else if(strcmp(argv[0], "showmain") == 0){
-            //argv[1] should be int
-            showmain(0);
         }else if(strcmp(argv[0], "showptable") == 0){
             //argv[1] should be int
             showptable();
         }else{
-            printf("INVALID COMMAND\n");
+            int num;
+            num = atoi(argv[1]);
+            if(strcmp(argv[0], "read") == 0){
+                //argv[1] should be int
+                read_addy(0);
+            }else if(strcmp(argv[0], "write") == 0){
+                //argv[1] and argv[2] should be ints
+                write_addy(0, 0);
+            }else if(strcmp(argv[0], "showmain") == 0){
+                //argv[1] should be int
+                showmain(0);
+            }else{
+                printf("INVALID COMMAND\n");
+            }
         }
     }
-
     return 0;
 }
