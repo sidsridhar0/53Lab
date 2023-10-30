@@ -16,7 +16,7 @@ struct VirtualMemory{
 };
 
 struct MainMemory{
-    struct mm[4][8];    //4 mm
+    int mm[4][8];    //4 mm
 };
 
 struct DiskMemory{
