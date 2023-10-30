@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
-
+#define INP_SIZE 100
 struct Page{
     int addy[8];
     bool valid;     //if valid, in main memory(pp), else in dp
@@ -42,6 +43,32 @@ int main(){
         }
     }
     printf("Initialized\n");
+
+    char inp[INP_SIZE];
+    while(1){
+        //COPIED FROM LAB 2
+        printf("> ");
+        fflush(stdout);
+
+        // parse argv from input
+        fgets(inp, INP_SIZE, stdin);
+        inp[strlen(inp)-1] = '\0';
+        printf("%s", inp);
+        char *tmp = strtok(inp, " ");
+        if(tmp == NULL){
+            continue;
+        }
+        char *argv[50];
+        int num_args = 0;
+        while (tmp != NULL) {
+            argv[num_args] = strdup(tmp);
+            num_args += 1;
+            tmp = strtok(NULL, " ");
+        }
+        if(strcmp(argv[0], "quit") == 0){
+            break;
+        }
+    }
 
     return 0;
 }
