@@ -23,5 +23,5 @@ struct DiskMemory{
 };
 
 int main(){
-
+    printf("hello world");
 }
