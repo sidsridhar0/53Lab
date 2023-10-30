@@ -24,7 +24,23 @@ struct DiskMemory{
     int dm[16][8];    //16 dm
 };
 
-int main(){
+void read_addy(int addy){
+
+}
+
+void write_addy(int addy, int num){
+
+}
+
+void showmain(int addy){
+
+}
+
+void showptable(){
+
+}
+
+int main(int argc, char* argv[]){
     struct VirtualMemory virtualMemory;
     struct DiskMemory diskMemory;
     struct MainMemory mainMemory;
@@ -42,7 +58,7 @@ int main(){
             }
         }
     }
-    printf("Initialized\n");
+    printf("INITIALIZED\n");
 
     char inp[INP_SIZE];
     while(1){
@@ -65,8 +81,24 @@ int main(){
             num_args += 1;
             tmp = strtok(NULL, " ");
         }
+
+        //commands
         if(strcmp(argv[0], "quit") == 0){
             break;
+        }else if(strcmp(argv[0], "read") == 0){
+            //argv[1] should be int
+            read_addy(0);
+        }else if(strcmp(argv[0], "write") == 0){
+            //argv[1] and argv[2] should be ints
+            write_addy(0, 0);
+        }else if(strcmp(argv[0], "showmain") == 0){
+            //argv[1] should be int
+            showmain(0);
+        }else if(strcmp(argv[0], "showptable") == 0){
+            //argv[1] should be int
+            showptable();
+        }else{
+            printf("INVALID COMMAND\n");
         }
     }
 
