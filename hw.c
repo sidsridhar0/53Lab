@@ -29,13 +29,41 @@ struct VirtualMemory virtualMemory;
 struct DiskMemory diskMemory;
 struct MainMemory mainMemory;
 
+int open_memory(){
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 8; j++){
+            if(mainMemory.mm[i][j] == -1){
+                int addy = i * 8 + j; 
+                return addy;
+            }
+        }
+    }
+    return -1;
+}
+
 void load_data(int i, int j) {
-    // Implement your data loading logic here
+    int open_addy = open_memory();
+    if(open_addy == -1){
+        //RUN FIFO OR LRU HERE TO CLEAR A PAGE OTHERWISE INFINITE LOOP
+        printf("RUN FIFO/LRU");
+    }else{
+        //mod page info
+        int data = virtualMemory.vm[i];
+        
+    }
 }
 
 void read_addy(int addy) {
     int i = addy / 8;
     int j = addy % 8;
+    int data;
+    if(virtualMemory.vm[i].valid){
+        data = mainMemory.mm[virtualMemory.vm[i].vpn][j];
+    }else{
+        printf("A Page Fault Has Occurred");
+        load_data(i, j);
+        read_addy(addy);
+    }
     
 }
 
