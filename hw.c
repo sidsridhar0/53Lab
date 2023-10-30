@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+
 struct Page{
     int addy[8];
     bool valid;     //if valid, in main memory(pp), else in dp
@@ -15,7 +16,7 @@ struct VirtualMemory{
 };
 
 struct MainMemory{
-    struct Page mm[4];    //4 mm
+    struct mm[4][8];    //4 mm
 };
 
 struct DiskMemory{
@@ -23,5 +24,24 @@ struct DiskMemory{
 };
 
 int main(){
-    printf("hello world");
+    struct VirtualMemory virtualMemory;
+    struct DiskMemory diskMemory;
+    struct MainMemory mainMemory;
+    for (int i = 0; i < 16; i++) {
+        virtualMemory.vm[i].valid = false;
+        virtualMemory.vm[i].dirty = false;
+        virtualMemory.vm[i].pp = -1;
+        virtualMemory.vm[i].dp = -1;
+
+        for (int j = 0; j < 8; j++) {
+            virtualMemory.vm[i].addy[j] = -1;
+            diskMemory.dm[i][j] = -1;
+            if(i < 4){
+                mainMemory.mm[i][j] = -1;
+            }
+        }
+    }
+    printf("Initialized\n");
+
+    return 0;
 }
