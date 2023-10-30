@@ -4,79 +4,94 @@
 #include <string.h>
 
 #define INP_SIZE 100
-struct Page{
-    int addy[8];
-    bool valid;     //if valid, in main memory(pp), else in dp
-    bool dirty;     //written to
-    int pp;         //physical page address
-    int dp;         //disk page address
+
+struct Page {
+    int vpn;        //main memory
+    bool valid;     // if valid, in main memory (pp), else in dp
+    bool dirty;     // written to
+    int dp;         // disk page address
+    
 };
 
-struct VirtualMemory{
-    struct Page vm[16];    //16 vm
+struct VirtualMemory {
+    struct Page vm[16];    // 16 vm
 };
 
-struct MainMemory{
-    int mm[4][8];    //4 mm
+struct MainMemory {
+    int mm[4][8];    // 4x8 raw values
 };
 
-struct DiskMemory{
-    int dm[16][8];    //16 dm
+struct DiskMemory {
+    int dm[16][8];    // 16x8 raw values
 };
 
-void read_addy(int addy){
+struct VirtualMemory virtualMemory;
+struct DiskMemory diskMemory;
+struct MainMemory mainMemory;
 
+void load_data(int i, int j) {
+    // Implement your data loading logic here
 }
 
-void write_addy(int addy, int num){
-
+void read_addy(int addy) {
+    int i = addy / 8;
+    int j = addy % 8;
+    
 }
 
-void showmain(int addy){
-
+void write_addy(int addy, int num) {
+    int i = addy / 8;
+    int j = addy % 8;
 }
 
-void showptable(){
-
-}
-
-int main(int argc, char* arg[]){
-    //init algorithm
-    bool algo_fifo = true;
-    if(strcmp(arg[0], "LRU") == 0){
-        algo_fifo = false;
+void showmain(int page_num) {
+    for (int i = 0; i < 8; i++){
+        printf("%d: %d\n", i, mainMemory.mm[page_num][i]);
     }
-    struct VirtualMemory virtualMemory;
-    struct DiskMemory diskMemory;
-    struct MainMemory mainMemory;
+}
+
+void showptable() {
+    for (int i = 0; i < 16; i++){
+        printf("%d:%d:%d:%d\n", virtualMemory.vm[i].dp, virtualMemory.vm[i].valid, virtualMemory.vm[i].dirty, virtualMemory.vm[i].dp);
+    }
+}
+
+void init_memory(){
     for (int i = 0; i < 16; i++) {
         virtualMemory.vm[i].valid = false;
         virtualMemory.vm[i].dirty = false;
-        virtualMemory.vm[i].pp = -1;
         virtualMemory.vm[i].dp = -1;
 
-        for (int j = 0; j < 8; j++) {
-            virtualMemory.vm[i].addy[j] = -1;
+        for (int j = 0; j < 8; j++){
             diskMemory.dm[i][j] = -1;
-            if(i < 4){
+            if (i < 4) {
                 mainMemory.mm[i][j] = -1;
             }
         }
     }
     printf("INITIALIZED\n");
+}
+
+int main(int argc, char* arg[]) {
+    // Init algorithm
+    bool algo_fifo = true;
+    if (argc > 1 && strcmp(arg[1], "LRU") == 0) {
+        algo_fifo = false;
+    }
+
+    init_memory();
 
     char inp[INP_SIZE];
-    while(1){
-        //COPIED FROM LAB 2
+    while (1) {
         printf("> ");
         fflush(stdout);
 
-        // parse argv from input
+        // Parse argv from input
         fgets(inp, INP_SIZE, stdin);
-        inp[strlen(inp)-1] = '\0';
-        printf("%s", inp);
+        inp[strlen(inp) - 1] = '\0';
+        //printf("%s\n", inp);
         char *tmp = strtok(inp, " ");
-        if(tmp == NULL){
+        if (tmp == NULL) {
             continue;
         }
         char *argv[50];
@@ -87,25 +102,30 @@ int main(int argc, char* arg[]){
             tmp = strtok(NULL, " ");
         }
 
-        //commands
-        if(strcmp(argv[0], "quit") == 0){
+        // Commands
+        if (strcmp(argv[0], "quit") == 0) {
             break;
-        }else if(strcmp(argv[0], "showptable") == 0){
-            //argv[1] should be int
+        } else if (strcmp(argv[0], "showptable") == 0) {
+            // argv[1] should be int
             showptable();
-        }else{
-            int num;
-            num = atoi(argv[1]);
-            if(strcmp(argv[0], "read") == 0){
-                //argv[1] should be int
-                read_addy(0);
-            }else if(strcmp(argv[0], "write") == 0){
-                //argv[1] and argv[2] should be ints
-                write_addy(0, 0);
-            }else if(strcmp(argv[0], "showmain") == 0){
-                //argv[1] should be int
-                showmain(0);
-            }else{
+        } else {
+            if (num_args < 2) {
+                printf("Insufficient arguments.\n");
+                continue;
+            }
+            int num = atoi(argv[1]);
+            if (strcmp(argv[0], "read") == 0) {
+                read_addy(num);
+            } else if (strcmp(argv[0], "write") == 0) {
+                if (num_args < 3) {
+                    printf("Insufficient arguments for write command.\n");
+                    continue;
+                }
+                int value = atoi(argv[2]);
+                write_addy(num, value);
+            } else if (strcmp(argv[0], "showmain") == 0) {
+                showmain(num);
+            } else {
                 printf("INVALID COMMAND\n");
             }
         }
