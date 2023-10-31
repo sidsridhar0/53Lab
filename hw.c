@@ -45,35 +45,45 @@ void load_page(int disk_page, int main_page){
     }
 }
 
-void evict_fifo(){
+void evict_fifo(int page){
+    int victim = fifo_list[0][0];
     int virt_page = fifo_list[0][1];
-    virt_mem[virt_page].valid = false;
     printf("EVICTING %d\n", virt_page);
     for(int i = 0; i < 3; i++){
         fifo_list[i][0] = fifo_list[i+1][0];
         fifo_list[i][1] = fifo_list[i+1][1];
     }
+    fifo_list[3][0] = victim;
+    fifo_list[3][1] = page;
+    virt_mem[virt_page].valid = false;
+    virt_mem[virt_page].dirty = false;
+    load_page(page, victim);
+    virt_mem[page].pp = victim;
 }
 
-int evict_lru(){
-    int to_evict = 0;
-    for(int i = 0; i < 4; i++){
-        if(lru_list[to_evict][1] > lru_list[i][1]){
-            to_evict = i;
+void evict_lru(int page){
+    int victim = 0;
+    for(int i = 1; i < 4; i++){
+        if(lru_list[victim][1] > lru_list[i][1]){
+            victim = i;
         }
     }
-    return to_evict;
+    int virt_page = lru_list[victim][0];
+    printf("EVICTING %d\n", virt_page);
+    virt_mem[virt_page].valid = false;
+    virt_mem[virt_page].dirty = false;
+    load_page(page, victim);
+    lru_list[victim][0] = page;
+    // lru_list[victim][1] = lru_counter;
+    virt_mem[page].pp = victim;
 }
 
-int evict_page(){
-    int page;
+void evict_page(int page){
     if(algo_fifo == true){
-        evict_fifo();
-        page = 0;
+        evict_fifo(page);
     }else{
-        page = evict_lru();
+        evict_lru(page);
     }
-    return page;
 }
 
 void page_fault(int page){ // REVISIT
@@ -88,16 +98,7 @@ void page_fault(int page){ // REVISIT
         lru_list[open_spot][1] = lru_counter;
         open_spot++;
     } else{
-        int victim = fifo_list[0][0];
-        int evicted = evict_page();
-        fifo_list[3][0] = victim;
-        fifo_list[3][1] = page;
-
-        lru_list[evicted][0] = page;
-        lru_list[evicted][1] = lru_counter;
-
-        load_page(page, victim);
-        virt_mem[page].pp = victim;
+        evict_page(page);
     }
     virt_mem[page].valid = true;
 }
@@ -110,7 +111,7 @@ void read_addy(int addy){
         page_fault(page);
     }
     int main_page = virt_mem[page].pp;
-    lru_counter ++;
+    lru_counter++;
     lru_list[main_page][1] = lru_counter;
     printf("%d\n", main_mem[main_page][local_addr]);
 }
