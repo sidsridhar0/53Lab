@@ -48,7 +48,7 @@ void load_page(int disk_page, int main_page){
 void evict_fifo(int page){
     int victim = fifo_list[0][0];
     int virt_page = fifo_list[0][1];
-    printf("EVICTING %d\n", virt_page);
+    // printf("EVICTING %d\n", virt_page);
     for(int i = 0; i < 3; i++){
         fifo_list[i][0] = fifo_list[i+1][0];
         fifo_list[i][1] = fifo_list[i+1][1];
