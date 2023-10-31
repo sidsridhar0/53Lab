@@ -1,117 +1,134 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define INP_SIZE 100
 
-struct Page {
-    int vpn;        //main memory
-    bool valid;     // if valid, in main memory (pp), else in dp
-    bool dirty;     // written to
-    int dp;         // disk page address
-    
+struct Page{
+    bool valid;     //if valid, in main memory(pp), else in dp
+    bool dirty;     //written to
+    int pp;         //physical page address
+    // int dp;         //disk page address
 };
 
-struct VirtualMemory {
-    struct Page vm[16];    // 16 vm
-};
+struct Page virt_mem[16];
+int main_mem[4][8];
+int disk_mem[16][8];
 
-struct MainMemory {
-    int mm[4][8];    // 4x8 raw values
-};
+int fifo_list[4];
+int lru_list[4];
+int open_spot = 0;
 
-struct DiskMemory {
-    int dm[16][8];    // 16x8 raw values
-};
-
-struct VirtualMemory virtualMemory;
-struct DiskMemory diskMemory;
-struct MainMemory mainMemory;
-
-int open_memory(){
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 8; j++){
-            if(mainMemory.mm[i][j] == -1){
-                int addy = i * 8 + j; 
-                return addy;
-            }
-        }
-    }
-    return -1;
-}
-
-void load_data(int i, int j) {
-    int open_addy = open_memory();
-    if(open_addy == -1){
-        //RUN FIFO OR LRU HERE TO CLEAR A PAGE OTHERWISE INFINITE LOOP
-        printf("RUN FIFO/LRU");
-    }else{
-        //mod page info
-        
-
-        
-    }
-}
-
-void read_addy(int addy) {
-    int i = addy / 8;
-    int j = addy % 8;
-    int data;
-    if(virtualMemory.vm[i].valid){
-        data = mainMemory.mm[virtualMemory.vm[i].vpn][j];
-    }else{
-        printf("A Page Fault Has Occurred");
-        load_data(i, j);
-        read_addy(addy);
-    }
-    
-}
-
-void write_addy(int addy, int num) {
-    int i = addy / 8;
-    int j = addy % 8;
-}
+bool algo_fifo;
 
 void showmain(int page_num) {
     for (int i = 0; i < 8; i++){
-        printf("%d: %d\n", i, mainMemory.mm[page_num][i]);
+        printf("%d: %d\n", i, main_mem[page_num][i]);
     }
 }
 
 void showptable() {
     for (int i = 0; i < 16; i++){
-        printf("%d:%d:%d:%d\n", virtualMemory.vm[i].dp, virtualMemory.vm[i].valid, virtualMemory.vm[i].dirty, virtualMemory.vm[i].dp);
+        printf("%d:%d:%d:%d\n", i, virt_mem[i].valid, virt_mem[i].dirty, i);
     }
+}
+
+void load_page(int disk_page, int main_page){
+    for(int i = 0; i < 8; i++){
+        main_mem[main_page][i] = disk_mem[disk_page][i];
+    }
+}
+
+void evict_fifo(){
+    for(int i = 0; i < 3; i++){
+        fifo_list[i] = fifo_list[i+1];
+    }
+}
+
+int evict_lru(){
+    int evicted = lru_list[0];
+}
+
+int evict_page(){
+    int page;
+    return page;
+    if(algo_fifo == true){
+        evict_fifo();
+        page = 3;
+    }else{
+        page = evict_lru();
+    }
+    return page;
+}
+
+void page_fault(int page){ // REVISIT
+    printf("A Page Fault Has Occurred\n");
+    if(open_spot < 4){
+        load_page(page, open_spot);
+        virt_mem[page].pp = open_spot;
+        fifo_list[open_spot] = open_spot;
+        open_spot++;
+    } else{
+        int victim = fifo_list[0];
+        int evicted = evict_page();
+        fifo_list[3] = victim;
+        load_page(page, victim);
+        virt_mem[page].pp = victim;
+    }
+    virt_mem[page].valid = 1;
+}
+
+void read_addy(int addy){
+    int page = addy / 8;
+    int local_addr = addy % 8;
+
+    if(virt_mem[page].valid == false){
+        page_fault(page);
+    }
+    int main_page = virt_mem[page].pp;
+    printf("%d\n", main_mem[page][local_addr]);
+}
+
+void write_addy(int addy, int val){
+    int page = addy / 8;
+    int local_addr = addy % 8;
+    disk_mem[page][local_addr] = val;
+    if(virt_mem[page].valid == false){
+        page_fault(page);
+    }
+    int main_page = virt_mem[page].pp;
+    main_mem[main_page][local_addr] = val;
+    printf("WRITTEN: %d", main_mem[main_page][local_addr]);
 }
 
 void init_memory(){
     for (int i = 0; i < 16; i++) {
-        virtualMemory.vm[i].valid = false;
-        virtualMemory.vm[i].dirty = false;
-        virtualMemory.vm[i].dp = -1;
+        virt_mem[i].valid = 0;
+        virt_mem[i].dirty = 0;
+        virt_mem[i].pp = -1;
 
-        for (int j = 0; j < 8; j++){
-            diskMemory.dm[i][j] = -1;
-            if (i < 4) {
-                mainMemory.mm[i][j] = -1;
+        for (int j = 0; j < 8; j++) {
+            disk_mem[i][j] = -1;
+            if(i < 4){
+                main_mem[i][j] = -1;
             }
         }
     }
-    printf("INITIALIZED\n");
+    printf("Initialized\n");
 }
 
-int main(int argc, char* arg[]) {
-    // Init algorithm
-    bool algo_fifo = true;
+
+int main(int argc, char* arg[]){
+    algo_fifo = true;
     if (argc > 1 && strcmp(arg[1], "LRU") == 0) {
         algo_fifo = false;
     }
-
+    // Init algorithm
     init_memory();
 
     char inp[INP_SIZE];
-    while (1) {
+    while (true) {
         printf("> ");
         fflush(stdout);
 
