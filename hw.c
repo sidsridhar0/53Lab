@@ -48,7 +48,8 @@ void load_data(int i, int j) {
         printf("RUN FIFO/LRU");
     }else{
         //mod page info
-        int data = virtualMemory.vm[i];
+        
+
         
     }
 }
