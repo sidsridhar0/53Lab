@@ -162,7 +162,8 @@ void init_memory(){
 
 int main(int argc, char* arg[]){
     algo_fifo = true;
-    if (argc > 1 && strcmp(arg[1], "LRU") == 0) {
+    printf("ARG %d %s", argc, *arg);
+    if (argc >= 1 && strcmp(arg[1], "LRU") == 0) {
         algo_fifo = false;
         printf("MAIN 1");
     }

@@ -1,4 +1,4 @@
-./hw FIFO
+FIFO
 showptable
 showmain 0
 read 9

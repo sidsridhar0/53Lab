@@ -1,7 +1,9 @@
-./hw LRU
+LRU
 write 10 202
 write 31 403
 read 72
+hello world 1
+
 read 0
 read 12
 write 9 300
