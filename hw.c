@@ -17,7 +17,8 @@ int main_mem[4][8];
 int disk_mem[16][8];
 
 int fifo_list[4][2];
-int lru_list[4];
+int lru_list[4][2];
+int lru_counter = 0;
 int open_spot = 0;
 
 bool algo_fifo;
@@ -46,7 +47,8 @@ void load_page(int disk_page, int main_page){
 
 void evict_fifo(){
     int virt_page = fifo_list[0][1];
-    virt_mem[virt_page].valid = 0;
+    virt_mem[virt_page].valid = false;
+    printf("EVICTING %d\n", virt_page);
     for(int i = 0; i < 3; i++){
         fifo_list[i][0] = fifo_list[i+1][0];
         fifo_list[i][1] = fifo_list[i+1][1];
@@ -54,15 +56,20 @@ void evict_fifo(){
 }
 
 int evict_lru(){
-    int evicted = lru_list[0];
+    int to_evict = 0;
+    for(int i = 0; i < 4; i++){
+        if(lru_list[to_evict][1] > lru_list[i][1]){
+            to_evict = i;
+        }
+    }
+    return to_evict;
 }
 
 int evict_page(){
     int page;
-    return page;
     if(algo_fifo == true){
         evict_fifo();
-        page = 3;
+        page = 0;
     }else{
         page = evict_lru();
     }
@@ -76,12 +83,19 @@ void page_fault(int page){ // REVISIT
         virt_mem[page].pp = open_spot;
         fifo_list[open_spot][0] = open_spot;
         fifo_list[open_spot][1] = page;
+
+        lru_list[open_spot][0] = page;
+        lru_list[open_spot][1] = lru_counter;
         open_spot++;
     } else{
         int victim = fifo_list[0][0];
         int evicted = evict_page();
         fifo_list[3][0] = victim;
         fifo_list[3][1] = page;
+
+        lru_list[evicted][0] = page;
+        lru_list[evicted][1] = lru_counter;
+
         load_page(page, victim);
         virt_mem[page].pp = victim;
     }
@@ -96,6 +110,8 @@ void read_addy(int addy){
         page_fault(page);
     }
     int main_page = virt_mem[page].pp;
+    lru_counter ++;
+    lru_list[main_page][1] = lru_counter;
     printf("%d\n", main_mem[main_page][local_addr]);
 }
 
@@ -109,6 +125,8 @@ void write_addy(int addy, int val){
     int main_page = virt_mem[page].pp;
     virt_mem[page].dirty = true;
     main_mem[main_page][local_addr] = val;
+    lru_counter ++;
+    lru_list[main_page][1] = lru_counter;
     //printf("WRITTEN: %d\n", main_mem[main_page][local_addr]);
 }
 
@@ -180,7 +198,11 @@ int main(int argc, char* arg[]){
                 int value = atoi(argv[2]);
                 write_addy(num, value);
             } else if (strcmp(argv[0], "showmain") == 0) {
-                showmain(num);
+                if(num < 4){
+                    showmain(num);
+                } else{
+                    printf("Invalid page number.\n");
+                }
             } else {
                 printf("INVALID COMMAND\n");
             }
