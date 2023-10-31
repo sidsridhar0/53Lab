@@ -16,7 +16,7 @@ struct Page virt_mem[16];
 int main_mem[4][8];
 int disk_mem[16][8];
 
-int fifo_list[4];
+int fifo_list[4][2];
 int lru_list[4];
 int open_spot = 0;
 
@@ -30,7 +30,11 @@ void showmain(int page_num) {
 
 void showptable() {
     for (int i = 0; i < 16; i++){
-        printf("%d:%d:%d:%d\n", i, virt_mem[i].valid, virt_mem[i].dirty, i);
+        int pn = i;
+        if(virt_mem[i].valid == true){
+            pn = virt_mem[i].pp;
+        }
+        printf("%d:%d:%d:%d\n", i, virt_mem[i].valid, virt_mem[i].dirty, pn);
     }
 }
 
@@ -41,8 +45,11 @@ void load_page(int disk_page, int main_page){
 }
 
 void evict_fifo(){
+    int virt_page = fifo_list[0][1];
+    virt_mem[virt_page].valid = 0;
     for(int i = 0; i < 3; i++){
-        fifo_list[i] = fifo_list[i+1];
+        fifo_list[i][0] = fifo_list[i+1][0];
+        fifo_list[i][1] = fifo_list[i+1][1];
     }
 }
 
@@ -67,16 +74,18 @@ void page_fault(int page){ // REVISIT
     if(open_spot < 4){
         load_page(page, open_spot);
         virt_mem[page].pp = open_spot;
-        fifo_list[open_spot] = open_spot;
+        fifo_list[open_spot][0] = open_spot;
+        fifo_list[open_spot][1] = page;
         open_spot++;
     } else{
-        int victim = fifo_list[0];
+        int victim = fifo_list[0][0];
         int evicted = evict_page();
-        fifo_list[3] = victim;
+        fifo_list[3][0] = victim;
+        fifo_list[3][1] = page;
         load_page(page, victim);
         virt_mem[page].pp = victim;
     }
-    virt_mem[page].valid = 1;
+    virt_mem[page].valid = true;
 }
 
 void read_addy(int addy){
@@ -87,7 +96,7 @@ void read_addy(int addy){
         page_fault(page);
     }
     int main_page = virt_mem[page].pp;
-    printf("%d\n", main_mem[page][local_addr]);
+    printf("%d\n", main_mem[main_page][local_addr]);
 }
 
 void write_addy(int addy, int val){
@@ -98,8 +107,9 @@ void write_addy(int addy, int val){
         page_fault(page);
     }
     int main_page = virt_mem[page].pp;
+    virt_mem[page].dirty = true;
     main_mem[main_page][local_addr] = val;
-    printf("WRITTEN: %d", main_mem[main_page][local_addr]);
+    //printf("WRITTEN: %d\n", main_mem[main_page][local_addr]);
 }
 
 void init_memory(){
