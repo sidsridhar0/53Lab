@@ -8,6 +8,8 @@
 #define INP_SIZE 100
 #define HEAP_SIZE 127
 
+
+
 void malloc_func(int num_bytes){
     return;
 }
@@ -25,7 +27,7 @@ void blocklist(){
 }
 
 void writemem(int pointer, char* vals){
-
+    return;
 }
 
 void memcheck(int pointer){
@@ -35,6 +37,7 @@ void memcheck(int pointer){
 void printmem(int pointer, int num_bytes){
     return;
 }
+
 
 int main(){
     char inp[INP_SIZE];

@@ -1,0 +1,254 @@
+        -:    0:Source:hw.c
+        -:    0:Graph:hwX-hw.gcno
+        -:    0:Data:hwX-hw.gcda
+        -:    0:Runs:2
+        -:    1://Siddharthen Sridhar(95532627), Rohan Jayasekara(37328564)
+        -:    2:
+        -:    3:#include <stdio.h>
+        -:    4:#include <stdlib.h>
+        -:    5:#include <string.h>
+        -:    6:#include <stdbool.h>
+        -:    7:
+        -:    8:#define INP_SIZE 100
+        -:    9:
+        -:   10:struct Page{
+        -:   11:    bool valid;     //if valid, in main memory(pp), else in dp
+        -:   12:    bool dirty;     //written to
+        -:   13:    int pp;         //physical page address
+        -:   14:    // int dp;      //disk page address // not needed
+        -:   15:};
+        -:   16:
+        -:   17:struct Page virt_mem[16];   // virtual memory info
+        -:   18:int main_mem[4][8];     // "physical main memory"
+        -:   19:int disk_mem[16][8];    // "secondary disk storage"
+        -:   20:
+        -:   21:int fifo_list[4][2];    // queue for fifo evicting
+        -:   22:int lru_list[4][2];     // keeps track of update history for lru evicting
+        -:   23:int lru_counter = 0;    // keeps track of time for lru updates
+        -:   24:int open_spot = 0;      // index of open memory before it is full
+        -:   25:
+        -:   26:bool algo_fifo;     // whether it uses FIFO or LRU
+        -:   27:
+        4:   28:void showmain(int page_num) { // print a main memory page
+        -:   29:    // printf("SHOWMAIN");
+       36:   30:    for (int i = 0; i < 8; i++){
+       32:   31:        printf("%d: %d\n", page_num * 8 + i, main_mem[page_num][i]);
+        -:   32:    }
+        4:   33:}
+        -:   34:
+        4:   35:void showptable() { // print info about all virtual pages
+       68:   36:    for (int i = 0; i < 16; i++){
+       64:   37:        int pn = i;
+       64:   38:        if(virt_mem[i].valid == true){
+       12:   39:            pn = virt_mem[i].pp;
+        -:   40:            // printf("SHOWPTABLE");
+        -:   41:        }
+       64:   42:        printf("%d:%d:%d:%d\n", i, virt_mem[i].valid, virt_mem[i].dirty, pn);
+        -:   43:    }
+        4:   44:}
+        -:   45:
+       13:   46:void load_page(int disk_page, int main_page){ // moves page data from disk page to main memory page
+      117:   47:    for(int i = 0; i < 8; i++){
+      104:   48:        main_mem[main_page][i] = disk_mem[disk_page][i];
+        -:   49:    }
+        -:   50:    // printf("LOAD_PAGE");
+       13:   51:}
+        -:   52:
+        2:   53:void evict_fifo(int page){      // kick out main memory index in fifo_list[0][0]
+        2:   54:    int victim = fifo_list[0][0];
+        2:   55:    int virt_page = fifo_list[0][1];
+        -:   56:    // printf("EVICTING %d\n", virt_page);
+        8:   57:    for(int i = 0; i < 3; i++){     // shift fifo_list entries down
+        6:   58:        fifo_list[i][0] = fifo_list[i+1][0];
+        6:   59:        fifo_list[i][1] = fifo_list[i+1][1];
+        -:   60:    }
+        2:   61:    fifo_list[3][0] = victim;
+        2:   62:    fifo_list[3][1] = page;
+        2:   63:    virt_mem[virt_page].valid = false;  // reset dirty and valid for virtual page kicked out of main mem
+        2:   64:    virt_mem[virt_page].dirty = false;
+        2:   65:    load_page(page, victim);
+        2:   66:    virt_mem[page].pp = victim;     // set the physical page address in the added virtual page
+        -:   67:    // printf("EVICT_FIFO");
+        2:   68:}
+        -:   69:
+        3:   70:void evict_lru(int page){   // evict least recently used page
+        3:   71:    int victim = 0;
+       12:   72:    for(int i = 1; i < 4; i++){     // kick out virtual page at main memory index with the lowest update
+        9:   73:        if(lru_list[victim][1] > lru_list[i][1]){
+        3:   74:            victim = i;
+        -:   75:            // printf("EVICT_LRU");
+        -:   76:        }
+        -:   77:    }
+        3:   78:    int virt_page = lru_list[victim][0];
+        -:   79:    // printf("EVICTING %d\n", virt_page);
+        3:   80:    virt_mem[virt_page].valid = false;
+        3:   81:    virt_mem[virt_page].dirty = false;
+        3:   82:    load_page(page, victim);
+        3:   83:    lru_list[victim][0] = page;
+        -:   84:    // lru_list[victim][1] = lru_counter;
+        3:   85:    virt_mem[page].pp = victim;
+        3:   86:}
+        -:   87:
+        5:   88:void evict_page(int page){      // use either evict_fifo or evict_lru based on whats chosen when script is ran
+        5:   89:    if(algo_fifo == true){
+        -:   90:        // printf("EVICT_PAGE FIFO");
+        2:   91:        evict_fifo(page);
+        -:   92:    }else{
+        -:   93:        // printf("EVICT_PAGE LRU");
+        3:   94:        evict_lru(page);
+        -:   95:    }
+        5:   96:}
+        -:   97:
+       13:   98:void page_fault(int page){  // load_page in and remove specific page(based on LRU or FIFO)
+       13:   99:    printf("A Page Fault Has Occurred\n");
+       13:  100:    if(open_spot < 4){      // if there is open main memory just load the page into that space
+        8:  101:        load_page(page, open_spot);
+        8:  102:        virt_mem[page].pp = open_spot;
+        8:  103:        fifo_list[open_spot][0] = open_spot;
+        8:  104:        fifo_list[open_spot][1] = page;
+        -:  105:
+        8:  106:        lru_list[open_spot][0] = page;
+        8:  107:        lru_list[open_spot][1] = lru_counter;
+        8:  108:        open_spot++;
+        -:  109:        // printf("PAGE_FAULT 1");
+        -:  110:    } else{     // if there is no open main memory, evict a page
+        -:  111:        // printf("PAGE_FAULT 2");
+        5:  112:        evict_page(page);
+        -:  113:    }
+       13:  114:    virt_mem[page].valid = true;
+       13:  115:}
+        -:  116:
+        6:  117:void read_addy(int addy){   // print value at int address
+        6:  118:    int page = addy / 8;    // virtual page to be read
+        6:  119:    int local_addr = addy % 8;
+        -:  120:
+        6:  121:    if(virt_mem[page].valid == false){  // page fault if valid bit is 0
+        4:  122:        page_fault(page);
+        -:  123:        // printf("READ_ADDY");
+        -:  124:    }
+        -:  125:
+        6:  126:    int main_page = virt_mem[page].pp;    // main_memory index of virtual page
+        6:  127:    lru_counter++;  // update lru counter
+        6:  128:    lru_list[main_page][1] = lru_counter;
+        6:  129:    printf("%d\n", main_mem[main_page][local_addr]);
+        6:  130:}
+        -:  131:
+       12:  132:void write_addy(int addy, int val){ //  writes value into address
+       12:  133:    int page = addy / 8;
+       12:  134:    int local_addr = addy % 8;
+       12:  135:    disk_mem[page][local_addr] = val;   // update the disk memory first
+       12:  136:    if(virt_mem[page].valid == false){
+        9:  137:        page_fault(page);
+        -:  138:        // printf("WRITE_ADDY");
+        -:  139:    }
+        -:  140:
+       12:  141:    int main_page = virt_mem[page].pp;
+       12:  142:    virt_mem[page].dirty = true;
+       12:  143:    main_mem[main_page][local_addr] = val;
+       12:  144:    lru_counter ++;
+       12:  145:    lru_list[main_page][1] = lru_counter;
+        -:  146:    //printf("WRITTEN: %d\n", main_mem[main_page][local_addr]);
+       12:  147:}
+        -:  148:
+        2:  149:void init_memory(){     // initialize all memory to -1 and valid/dirty bits to 0
+        -:  150:    // printf("INIT_MEMORY");
+       34:  151:    for (int i = 0; i < 16; i++) {
+       32:  152:        virt_mem[i].valid = 0;
+       32:  153:        virt_mem[i].dirty = 0;
+       32:  154:        virt_mem[i].pp = -1;
+        -:  155:
+      288:  156:        for (int j = 0; j < 8; j++) {
+      256:  157:            disk_mem[i][j] = -1;
+      256:  158:            if(i < 4){
+       64:  159:                main_mem[i][j] = -1;
+        -:  160:            }
+        -:  161:        }
+       32:  162:        if(i < 4){
+        8:  163:            fifo_list[i][0] = -1;
+        8:  164:            fifo_list[i][1] = -1;
+        -:  165:
+        8:  166:            lru_list[i][0] = -1;
+        8:  167:            lru_list[i][1] = -1;
+        -:  168:        }
+        -:  169:    }
+        2:  170:    printf("Initialized\n");
+        2:  171:}
+        -:  172:
+        -:  173:
+        2:  174:int main(int argc, char* arg[]){
+        2:  175:    algo_fifo = true;
+        -:  176:    // printf("ARG %d %s", argc, *arg);
+        2:  177:    if (argc > 1 && strcmp(arg[1], "LRU") == 0) {  // Whether it uses LRU or FIFO
+        1:  178:        algo_fifo = false;
+        -:  179:        // printf("MAIN 1");
+        -:  180:    }
+        -:  181:    // Init algorithm
+        2:  182:    init_memory();
+        -:  183:
+        -:  184:    char inp[INP_SIZE];
+       32:  185:    while (true) {
+       34:  186:        printf("> ");   // get command
+       34:  187:        fflush(stdout);
+        -:  188:
+        -:  189:        // Parse argv from input
+       34:  190:        fgets(inp, INP_SIZE, stdin); 
+       34:  191:        inp[strlen(inp) - 1] = '\0';
+        -:  192:        //printf("%s\n", inp);
+       34:  193:        char *tmp = strtok(inp, " ");
+       34:  194:        if (tmp == NULL) {
+        -:  195:            // printf("MAIN 2");
+        4:  196:            continue;
+        -:  197:        }
+        -:  198:
+        -:  199:        //tokenize input
+        -:  200:        char *argv[50];
+       33:  201:        int num_args = 0;
+      104:  202:        while (tmp != NULL) {
+        -:  203:            // printf("MAIN 3");
+       71:  204:            argv[num_args] = strdup(tmp);
+       71:  205:            num_args += 1;
+       71:  206:            tmp = strtok(NULL, " ");
+        -:  207:        }
+        -:  208:
+        -:  209:        // Commands
+       33:  210:        if (strcmp(argv[0], "quit") == 0) {
+        -:  211:            // printf("MAIN 4");
+        2:  212:            break;
+       31:  213:        } else if (strcmp(argv[0], "showptable") == 0) {
+        -:  214:            // argv[1] should be int
+        -:  215:            // printf("MAIN 5");
+        4:  216:            showptable();
+        -:  217:        } else {
+       27:  218:            if (num_args < 2) {
+        2:  219:                printf("Insufficient arguments.\n");
+        -:  220:                // printf("MAIN 6");
+        2:  221:                continue;
+        -:  222:            }
+       25:  223:            int num = atoi(argv[1]);
+       25:  224:            if (strcmp(argv[0], "read") == 0) {
+        -:  225:                // printf("MAIN 7");
+        6:  226:                read_addy(num);
+       19:  227:            } else if (strcmp(argv[0], "write") == 0) {
+       13:  228:                if (num_args < 3) {
+        -:  229:                    // printf("MAIN 8");
+        1:  230:                    printf("Insufficient arguments for write command.\n");
+        1:  231:                    continue;
+        -:  232:                }
+       12:  233:                int value = atoi(argv[2]);
+       12:  234:                write_addy(num, value);
+        6:  235:            } else if (strcmp(argv[0], "showmain") == 0) {
+        5:  236:                if(num < 4){
+        -:  237:                    // printf("MAIN 9");
+        4:  238:                    showmain(num);
+        -:  239:                } else{
+        1:  240:                    printf("Invalid page number.\n");
+        -:  241:                    // printf("MAIN 10");
+        -:  242:                }
+        -:  243:            } else {
+        -:  244:                // printf("MAIN 11");
+        1:  245:                printf("INVALID COMMAND\n");
+        -:  246:            }
+        -:  247:        }
+        -:  248:    }
+        2:  249:    return 0;
+        -:  250:}
