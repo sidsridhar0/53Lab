@@ -15,7 +15,9 @@ struct Block{
 };
 
 void init_memory(){
-    return;
+    for(int i = 0; i < HEAP_SIZE; ++i){
+        memory[i] = 0;
+    }
 }
 
 void malloc_func(int num_bytes){
