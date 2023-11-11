@@ -8,7 +8,15 @@
 #define INP_SIZE 100
 #define HEAP_SIZE 127
 
+int memory[HEAP_SIZE];
 
+struct Block{
+
+};
+
+void init_memory(){
+    return;
+}
 
 void malloc_func(int num_bytes){
     return;
@@ -30,10 +38,6 @@ void writemem(int pointer, char* vals){
     return;
 }
 
-void memcheck(int pointer){
-    return;
-}
-
 void printmem(int pointer, int num_bytes){
     return;
 }
@@ -41,6 +45,8 @@ void printmem(int pointer, int num_bytes){
 
 int main(){
     char inp[INP_SIZE];
+    init_memory();
+
     while (true) {
         printf("> ");   // get command
         fflush(stdout);
@@ -71,20 +77,27 @@ int main(){
                 blocklist();
             }
         }else if(num_args == 2){
-            if(strcmp(argv[0], "memcheck") == 0){        // 1 args
-                memcheck(argv[1]);
-            }else if(strcmp(argv[0], "free") == 0){      // 1 args
-                free_func(argv[1]);
+            //set argv[2] to int
+            int arg1 = atoi(argv[1]);
+
+            if(strcmp(argv[0], "free") == 0){            // 1 args
+                free_func(arg1);
             }else if(strcmp(argv[0], "malloc") == 0){    // 1 args
-                malloc_func(argv[1]);
+                malloc_func(arg1);
             }
         }else if(num_args == 3){
-        if(strcmp(argv[0], "printmem") == 0){           // 2 args
-            printmem(argv[1], argv[2]);
-        }else if(strcmp(argv[0], "writemem") == 0){     // 2 args
-            writemem(argv[1], argv[2]);
-        }else if(strcmp(argv[0], "realloc") == 0){      // 2 args
-            realloc_func(argv[0], argv[1]);
+            //set argv[2] and argv[3] to ints
+            int arg1 = atoi(argv[1]);
+
+            if(strcmp(argv[0], "printmem") == 0){           // 2 args
+                int arg2 = atoi(argv[2]);
+                printmem(arg1, arg2);
+            }else if(strcmp(argv[0], "writemem") == 0){     // 2 args
+                writemem(arg1, argv[2]);
+            }else if(strcmp(argv[0], "realloc") == 0){      // 2 args
+                int arg2 = atoi(argv[2]);
+                realloc_func(arg1, arg2);
+            }
         }
     }
 }
