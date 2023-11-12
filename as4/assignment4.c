@@ -47,11 +47,14 @@ void free_func(int pointer){
     int header = pointer - 1;
     int header_size = (memory[header] >> 1);
     int next_header = header + header_size;
-    if(!(memory[next_header] & 1)){
+
+    while(next_header < HEAP_SIZE && !(memory[next_header] & 1)){
         memory[header] = header_size + (memory[next_header] >> 1);
-        //memory[header] = memory[header] >> 1;
         memory[header] = memory[header] << 1;
-    } else{
+        header_size = (memory[header] >> 1);
+        next_header = header + header_size;
+    }
+    if(memory[header] & 1){
         memory[header] -= 1;
     }
 }
@@ -97,8 +100,8 @@ int realloc_func(int pointer, int num_bytes){
     //check if smaller
     int header = pointer - 1;
     int header_size = memory[header] >> 1;
-    if( header_size - 1 == num_bytes){
-        return;
+    if(header_size - 1 == num_bytes){
+        return header + 1;
     }
     else if(header_size - 1 > num_bytes){
         //if smaller remove excess
@@ -111,20 +114,21 @@ int realloc_func(int pointer, int num_bytes){
         int next_header = header + num_bytes + 1;
         memory[next_header] = header_size - (num_bytes + 1);
         memory[next_header] = memory[next_header] << 1;
-    }else{
-        int next_header = header + header_size;
-        if(!(memory[next_header] & 1) ){
-            memory[header] = num_bytes + 1;
-            memory[header] = memory[header] << 1;
-            memory[header] += 1;
+    return header + 1;
+    //}else{
+        // int next_header = header + header_size;
+        // if(!(memory[next_header] & 1) && (header_size + (memory[next_header]>>1))){
+        //     memory[header] = num_bytes + 1;
+        //     memory[header] = memory[header] << 1;
+        //     memory[header] += 1;
             
-            // freed portion
-            int next_header = header + num_bytes + 1;
-            memory[next_header] = header_size - (num_bytes + 1);
-            memory[next_header] = memory[next_header] << 1;
-            //change this header
-            //add new free block header(make sure doesnt overwrite)
-        }
+        //     // freed portion
+        //     int next_header = header + num_bytes + 1;
+        //     memory[next_header] = header_size - (num_bytes + 1);
+        //     memory[next_header] = memory[next_header] << 1;
+        //     //change this header
+        //     //add new free block header(make sure doesnt overwrite)
+        // }
     }
     //check if smaller
         //if smaller remove excess
