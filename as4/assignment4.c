@@ -52,6 +52,18 @@ int malloc_func(int num_bytes){
 }
 
 void free_func(int pointer){
+    /*
+    This operation allows the user to resize a previously allocated block of memory. The
+    operation takes two arguments. The first argument is a pointer to the payload of a previously
+    allocated block of memory, and the second argument is the new size in bytes that the user
+    wants for the payload of that block. If the new size is smaller than the current size of the block,
+    your program should truncate the block and free any excess memory. If the new size is larger
+    and there is sufficient adjacent free space in the heap, your program should expand the block
+    into the adjacent free space. If there is not enough adjacent free space, your program should
+    allocate a new block of the appropriate size, copy the contents of the old block to the new
+    block, free the old block, and return a pointer to the payload of the new block. You can assume
+    that the argument is a correct pointer to the payload of an allocated block.
+    */
     int header = pointer - 1;
     int header_size = (memory[header] >> 1);
     int next_header = header + header_size;
@@ -68,6 +80,13 @@ void free_func(int pointer){
 }
 
 void blocklist(){
+    /*
+    This operation prints out information about all of the blocks in your heap. The
+    information about blocks should be printed in the order that the blocks are contained in the
+    heap. The following information should be printed about each block: pointer to the payload,
+    block size, and the allocation status (allocated of free). All three items of information about a
+    single block should be printed on a single line and should be separated by commas
+    */
     int i = 0;
     int count = 0;
     while(i < HEAP_SIZE && count <= HEAP_SIZE + 1){
@@ -82,6 +101,18 @@ void blocklist(){
 }
 
 void writemem(int pointer, char* vals){
+    /*
+    This operation writes alpha-numeric characters into memory. The operation takes
+    two arguments and there should be no empty spaces or null character at the end of the input.
+    The first argument is a pointer to the location in memory and the second argument is a
+    sequence of alpha-numeric characters which will be written into memory, starting at the
+    address indicated by the pointer. The first character will be written into the address indicated by
+    the pointer, and each character thereafter will be written into the neighboring addresses
+    sequentially. For example, the operation “writemem 3 abc” will write an ‘a’ into address 3,
+    a ‘b’ into address ‘4’, and a ‘c’ into address 5.
+    You can assume that the pointer argument will always be an address in the heap, assume that
+    all of the characters will be written into addresses in the heap
+    */
     int len_vals = 0;
     while(vals[len_vals] != '\0'){
         memory[pointer + len_vals] = vals[len_vals];
@@ -90,6 +121,12 @@ void writemem(int pointer, char* vals){
 }
 
 void printmem(int pointer, int num_bytes){
+    /*
+    This operation prints out a segment of memory in hexadecimal. The operation
+    takes two arguments. The first argument is a pointer to the first location in memory to print,
+    and the second argument is an integer indicating how many addresses to print. The contents of
+    all addresses will be printed on a single line and separated by a single space.
+    */
     for(int i = 0; i < num_bytes; ++i){
         //convert to hexadecimal from ASCII
         int tens = memory[pointer + i] / 16;
@@ -105,6 +142,18 @@ void printmem(int pointer, int num_bytes){
 }
 
 void realloc_func(int pointer, int num_bytes){
+    /*
+    This operation allows the user to resize a previously allocated block of memory. The
+    operation takes two arguments. The first argument is a pointer to the payload of a previously
+    allocated block of memory, and the second argument is the new size in bytes that the user
+    wants for the payload of that block. If the new size is smaller than the current size of the block,
+    your program should truncate the block and free any excess memory. If the new size is larger
+    and there is sufficient adjacent free space in the heap, your program should expand the block
+    into the adjacent free space. If there is not enough adjacent free space, your program should
+    allocate a new block of the appropriate size, copy the contents of the old block to the new
+    block, free the old block, and return a pointer to the payload of the new block. You can assume
+    that the argument is a correct pointer to the payload of an allocated block.
+    */
     int header = pointer - 1;
     int header_size = memory[header] >> 1;
     int tmp = header_size;
@@ -133,9 +182,6 @@ void realloc_func(int pointer, int num_bytes){
             memory[header] += 1;
             header_size = (memory[header] >> 1);
             next_header = header + header_size;
-            // freed portion
-            //change this header
-            //add new free block header(make sure doesnt overwrite)
         }
         if(header_size - 1 < num_bytes){
             int new_spot = malloc_func(num_bytes);
@@ -155,14 +201,6 @@ void realloc_func(int pointer, int num_bytes){
                 int next_header = header + num_bytes + 1;
                 memory[next_header] = header_size - (num_bytes + 1);
                 memory[next_header] = memory[next_header] << 1;
-
-                // next_header = header + memory[header];
-                // memory[next_header] = memory[header] - (num_bytes + 1);
-                // memory[next_header] = memory[next_header] << 1;
-
-                // memory[header] = num_bytes + 1;
-                // memory[header] = memory[header] << 1;
-                // memory[header] = memory[header] + 1;
             }
             printf("%d \n", pointer);
         }
