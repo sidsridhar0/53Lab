@@ -1,8 +1,5 @@
 //Siddharthen Sridhar(95532627), Rohan Jayasekara(37328564)
-/*
 
-
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +11,7 @@
 unsigned char memory[HEAP_SIZE];
 
 void init_memory(){
+    //init memory array to all 0s except for index 0 as header of free block 126
     unsigned char header_size = 127;
     header_size = header_size << 1;
     memory[0] = header_size;
@@ -22,24 +20,34 @@ void init_memory(){
     }
 }
 
-void malloc_func(int num_bytes){
+int malloc_func(int num_bytes){
+    /*
+    This operation allows the user to allocate a block of memory from your heap. This
+    operation should take one argument, the number of bytes which the user wants in the payload
+    of the allocated block. This operation should print out a pointer which is the first address of the
+    payload of the allocated block
+    */
     int i = 0;
     while((i < HEAP_SIZE) && ((memory[i] & 1) || ((memory[i] >> 1) <= num_bytes))){ //i is inbounds AND (i is allocated OR not enough space in block)
         i = i + (memory[i] >> 1);   //move to next block
     }
     if(i >= HEAP_SIZE){
         printf("Not enough space\n");
+        return -1;
     }else{
         int header_size = memory[i] >> 1;
         if(num_bytes < header_size - 1){
             int next_header = i + num_bytes + 1;
-            memory[next_header] = header_size - (num_bytes + 1);
-            memory[next_header] = memory[next_header] << 1;
+            if(next_header < HEAP_SIZE){
+                memory[next_header] = header_size - (num_bytes + 1);
+                memory[next_header] = memory[next_header] << 1;
+            }
         }
         memory[i] = num_bytes + 1;
         memory[i] = memory[i] << 1;
         memory[i] += 1;
         printf("%d\n", i+1);
+        return i + 1;
     }
 }
 
@@ -54,7 +62,7 @@ void free_func(int pointer){
         header_size = (memory[header] >> 1);
         next_header = header + header_size;
     }
-    if(memory[header] & 1){
+    if(memory[header] & 1){ 
         memory[header] -= 1;
     }
 }
@@ -96,14 +104,15 @@ void printmem(int pointer, int num_bytes){
     printf("\n");
 }
 
-int realloc_func(int pointer, int num_bytes){
-    //check if smaller
+void realloc_func(int pointer, int num_bytes){
     int header = pointer - 1;
     int header_size = memory[header] >> 1;
-    if(header_size - 1 == num_bytes){
-        return header + 1;
+    int tmp = header_size;
+    if(header_size - 1 == num_bytes){       //check if same size
+        printf("%d\n", pointer);
+        return;
     }
-    else if(header_size - 1 > num_bytes){
+    else if(header_size - 1 > num_bytes){   //check if smaller
         //if smaller remove excess
         //for new smaller block
         memory[header] = num_bytes + 1;
@@ -114,34 +123,50 @@ int realloc_func(int pointer, int num_bytes){
         int next_header = header + num_bytes + 1;
         memory[next_header] = header_size - (num_bytes + 1);
         memory[next_header] = memory[next_header] << 1;
-    return header + 1;
-    //}else{
-        // int next_header = header + header_size;
-        // if(!(memory[next_header] & 1) && (header_size + (memory[next_header]>>1))){
-        //     memory[header] = num_bytes + 1;
-        //     memory[header] = memory[header] << 1;
-        //     memory[header] += 1;
-            
-        //     // freed portion
-        //     int next_header = header + num_bytes + 1;
-        //     memory[next_header] = header_size - (num_bytes + 1);
-        //     memory[next_header] = memory[next_header] << 1;
-        //     //change this header
-        //     //add new free block header(make sure doesnt overwrite)
-        // }
+        printf("%d \n", pointer);
+    }else{                                  //check if larger
+        //!COALESCE
+        int next_header = header + header_size;
+        while(next_header < HEAP_SIZE && !(memory[next_header] & 1) && (header_size - 1 < num_bytes)){  //next header not oob, is free and smaller than num_bytes
+            memory[header] = header_size + (memory[next_header] >> 1);
+            memory[header] = memory[header] << 1;
+            memory[header] += 1;
+            header_size = (memory[header] >> 1);
+            next_header = header + header_size;
+            // freed portion
+            //change this header
+            //add new free block header(make sure doesnt overwrite)
+        }
+        if(header_size - 1 < num_bytes){
+            int new_spot = malloc_func(num_bytes);
+            if(new_spot != -1){
+                for(int i = 0; i < tmp; i++){
+                    memory[new_spot + i] = memory[pointer + i];
+                }
+            }
+            free_func(pointer);
+        }else{
+            if(header_size - 1 > num_bytes){
+                memory[header] = num_bytes + 1;
+                memory[header] = memory[header] << 1;
+                memory[header] += 1;
+                
+                // freed portion
+                int next_header = header + num_bytes + 1;
+                memory[next_header] = header_size - (num_bytes + 1);
+                memory[next_header] = memory[next_header] << 1;
+
+                // next_header = header + memory[header];
+                // memory[next_header] = memory[header] - (num_bytes + 1);
+                // memory[next_header] = memory[next_header] << 1;
+
+                // memory[header] = num_bytes + 1;
+                // memory[header] = memory[header] << 1;
+                // memory[header] = memory[header] + 1;
+            }
+            printf("%d \n", pointer);
+        }
     }
-    //check if smaller
-        //if smaller remove excess
-    //else
-        //see if can add more space after
-            //add excess
-        //else see if enough space for new block
-            //malloc block, free curr block
-        //else coalesce
-            //see if can relocate block
-                //malloc block, free curr block
-            //else return
-    return 0;
 }
 
 int main(){
@@ -183,7 +208,7 @@ int main(){
             if(strcmp(argv[0], "free") == 0){            // 1 args
                 free_func(arg1);
             }else if(strcmp(argv[0], "malloc") == 0){    // 1 args
-                malloc_func(arg1);
+                int temp = malloc_func(arg1);
             }
         }else if(num_args == 3){
             //set argv[2] and argv[3] to ints
