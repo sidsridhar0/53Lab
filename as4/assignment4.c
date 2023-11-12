@@ -8,47 +8,91 @@
 #define INP_SIZE 100
 #define HEAP_SIZE 127
 
-int memory[HEAP_SIZE];
-
-struct Block{
-
-};
+unsigned char memory[HEAP_SIZE];
 
 void init_memory(){
-    for(int i = 0; i < HEAP_SIZE; ++i){
+    unsigned char header_size = 127;
+    header_size = header_size << 1;
+    memory[0] = header_size;
+    for(int i = 1; i < HEAP_SIZE; ++i){
         memory[i] = 0;
     }
 }
 
 void malloc_func(int num_bytes){
-    return;
+    /*
+    p = start
+    while((p < end) && ((*p & 1) || (*p <= num_bytes)))
+        p = p + (*p & -2)
+    */
+
+    int i = 0;
+    while((i < HEAP_SIZE) && ((memory[i] & 1) || ((memory[i] >> 1) <= num_bytes))){ //i is inbounds AND (i is allocated OR not enough space in block)
+        i = i + (memory[i] >> 1);   //move to next block
+    }
+    if(i >= HEAP_SIZE){
+        printf("Not enough space\n");
+    }else{
+        int header_size = memory[i] >> 1;
+        if(num_bytes < header_size){
+            int next_header = i + num_bytes + 1;
+            memory[next_header] = header_size - (num_bytes + 1);
+            memory[next_header] = memory[next_header] << 1;
+        }
+        memory[i] = num_bytes + 1;
+        memory[i] = memory[i] << 1;
+        memory[i] += 1;
+        printf("%d\n", i+1);
+    }
 }
 
-int realloc_func(int pointer, int num_bytes){
-    return 0;
+void block_at(){
+    //!make func
 }
 
 void free_func(int pointer){
-    return;
+    memory[pointer];
 }
 
 void blocklist(){
-    return;
+    int i = 0;
+    while(i < HEAP_SIZE){
+        if((memory[i] & 1) == 1){
+            printf("%d, %d, allocated\n", i+1, (memory[i] >> 1) -1);
+        } else{
+            printf("%d, %d, free\n", i+1, (memory[i] >> 1) -1);
+        }
+        i += memory[i] >> 1; 
+    }
 }
 
 void writemem(int pointer, char* vals){
-    return;
+    int len_vals = 0;
+    while(vals[len_vals] != '\0'){
+        len_vals++;
+    }
+    for(int i = 0; i < len_vals; ++i){
+        memory[pointer + i] = vals[i];
+    }
 }
 
 void printmem(int pointer, int num_bytes){
-    return;
+    for(int i = 0; i < num_bytes; ++i){
+        //convert to hexadecimal from ASCII
+        int tens = memory[pointer + i] / 16;
+        int ones = memory[pointer + i] % 16;
+        printf("%d%d ", tens, ones);
+    }
+    printf("\n");
 }
 
+int realloc_func(int pointer, int num_bytes){       //! DO AT END
+    return 0;
+}
 
 int main(){
     char inp[INP_SIZE];
     init_memory();
-
     while (true) {
         printf("> ");   // get command
         fflush(stdout);
