@@ -28,13 +28,22 @@ int malloc_func(int num_bytes){
     payload of the allocated block
     */
     int i = 0;
-    while((i < HEAP_SIZE) && ((memory[i] & 1) || ((memory[i] >> 1) <= num_bytes))){ //i is inbounds AND (i is allocated OR not enough space in block)
+    int best_fit = -1;
+    int best_size = -1;
+    while(i < HEAP_SIZE){ // ! CHANGED TO BEST FIT NOT FIRST FIT
+        if(!(memory[i] & 1) && ((memory[i] >> 1) > num_bytes)){
+            if(best_fit == -1 || (memory[i] >> 1) < best_size){
+                best_fit = i;
+                best_size = (memory[i] >> 1);
+            }
+        }
         i = i + (memory[i] >> 1);   //move to next block
     }
-    if(i >= HEAP_SIZE){
+    if(best_fit == -1){
         printf("Not enough space\n");
         return -1;
-    }else{
+    } else{
+        i = best_fit;
         int header_size = memory[i] >> 1;
         if(num_bytes < header_size - 1){
             int next_header = i + num_bytes + 1;
@@ -49,6 +58,28 @@ int malloc_func(int num_bytes){
         printf("%d\n", i+1);
         return i + 1;
     }
+
+    // while((i < HEAP_SIZE) && ((memory[i] & 1) || ((memory[i] >> 1) <= num_bytes))){ //i is inbounds AND (i is allocated OR not enough space in block)
+    //     i = i + (memory[i] >> 1);   //move to next block
+    // }
+    // if(i >= HEAP_SIZE){
+    //     printf("Not enough space\n");
+    //     return -1;
+    // }else{
+    //     int header_size = memory[i] >> 1;
+    //     if(num_bytes < header_size - 1){
+    //         int next_header = i + num_bytes + 1;
+    //         if(next_header < HEAP_SIZE){
+    //             memory[next_header] = header_size - (num_bytes + 1);
+    //             memory[next_header] = memory[next_header] << 1;
+    //         }
+    //     }
+    //     memory[i] = num_bytes + 1;
+    //     memory[i] = memory[i] << 1;
+    //     memory[i] += 1;
+    //     printf("%d\n", i+1);
+    //     return i + 1;
+    // }
 }
 
 void free_func(int pointer){
@@ -97,6 +128,9 @@ void blocklist(){
         }
         i += memory[i] >> 1; 
         count++;
+    }
+    if(count > HEAP_SIZE + 1){
+        printf("ERROR: Wrote to header byte\n");
     }
 }
 
@@ -264,4 +298,3 @@ int main(){
         }
     }
 }
-
