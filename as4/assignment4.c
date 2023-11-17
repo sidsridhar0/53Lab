@@ -175,7 +175,7 @@ void printmem(int pointer, int num_bytes){
     printf("\n");
 }
 
-void realloc_func(int pointer, int num_bytes){
+int realloc_func(int pointer, int num_bytes){
     /*
     This operation allows the user to resize a previously allocated block of memory. The
     operation takes two arguments. The first argument is a pointer to the payload of a previously
@@ -193,7 +193,7 @@ void realloc_func(int pointer, int num_bytes){
     int tmp = header_size;
     if(header_size - 1 == num_bytes){       //check if same size
         printf("%d\n", pointer);
-        return;
+        return pointer;
     }
     else if(header_size - 1 > num_bytes){   //check if smaller
         //if smaller remove excess
@@ -207,6 +207,7 @@ void realloc_func(int pointer, int num_bytes){
         memory[next_header] = header_size - (num_bytes + 1);
         memory[next_header] = memory[next_header] << 1;
         printf("%d \n", pointer);
+        return pointer;
     }else{                                  //check if larger
         //!COALESCE
         int next_header = header + header_size;
@@ -225,6 +226,7 @@ void realloc_func(int pointer, int num_bytes){
                 }
             }
             free_func(pointer);
+            return pointer;
         }else{
             if(header_size - 1 > num_bytes){
                 memory[header] = num_bytes + 1;
@@ -237,6 +239,7 @@ void realloc_func(int pointer, int num_bytes){
                 memory[next_header] = memory[next_header] << 1;
             }
             printf("%d \n", pointer);
+            return pointer;
         }
     }
 }
