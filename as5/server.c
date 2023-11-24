@@ -1,7 +1,3 @@
-// CMU's csapp.h header file 
-// http://csapp.cs.cmu.edu/2e/ics2/code/include/csapp.h
-
-// sometimes it says addrinfo is an incomplete type and this fixes it...
 #define _POSIX_C_SOURCE 201712L
 #define MAXLINE 8192
 typedef struct sockaddr SA;
@@ -13,7 +9,9 @@ typedef struct sockaddr SA;
 #include <sys/socket.h>
 #include <netdb.h>
 
-
+float get_data(){
+    
+}
  
 
 int open_listenfd(char *port) {
@@ -30,7 +28,7 @@ int open_listenfd(char *port) {
 
     /* Walk the list for one that we can bind to */
     for(p = listp; p; p = p->ai_next) {
-        /* Createa socketdescriptor*/
+        /* Createa a socket descriptor*/
         if((listenfd= socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0) {
             continue; /* Socket failed, try the next*/
         }
@@ -48,15 +46,12 @@ int open_listenfd(char *port) {
 
     // clean up
     freeaddrinfo(listp);
-    if (!p) {
-        /* No address worked */
+    if (!p) {  /* No address worked */
         return-1;
     }
 
     /* Make it a listening socket ready to accept conn. requests */
-    // changed backlog argument from LISTENQ constant to 1
     if (listen(listenfd, 1) < 0) {
-        // error occurred at listen() call
         close(listenfd);
         return -1;
     }
@@ -74,6 +69,8 @@ void echo(int connfd) {
 }
 
 int main(int argc, char **argv) {
+    //! PORT IS THE LAST ARGUMENT IN ARGV, ALL CSV FILES ARE BEFORE
+
     int listenfd, connfd;
     socklen_t clientlen;
     struct sockaddr_storage clientaddr; /* Enough room for any addr */
