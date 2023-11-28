@@ -64,7 +64,26 @@ void echo(int connfd) {
     char buf[MAXLINE];
     while((n = read(connfd, buf, MAXLINE)) != 0) {
         printf("server received %d bytes\n", (int)n);
-        write(connfd, buf, n);
+
+        char *tmp = strtok(buf, " ");
+        if (tmp == NULL) {
+            // printf("MAIN 2");
+            continue;
+        }
+        //tokenize input
+        char *args[50];
+        int num_args = 0;
+        while (tmp != NULL) {
+            // printf("MAIN 3");
+            args[num_args] = strdup(tmp);
+            num_args += 1;
+            tmp = strtok(NULL, " ");
+        }
+
+        for(int i = 0; i < num_args; i++){
+            printf("%s", args[i]);
+            write(connfd, args[i], n);
+        }
     }
 }
 

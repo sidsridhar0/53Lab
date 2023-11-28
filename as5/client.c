@@ -1,6 +1,6 @@
 
 #define _POSIX_C_SOURCE 201712L
-#define MAXLINE 8192
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,45 +46,32 @@ int open_clientfd(char *hostname, char *port) {
 
 int main(int argc, char **argv) {
     int clientfd;
-    char *host, *port, buf[MAXLINE];
+    char *host, *port, buf[INP_SIZE];
     host = argv[1];
     port = argv[2];
     clientfd= open_clientfd(host, port);
-    while(fgets(buf, MAXLINE, stdin) != NULL) {
-        write(clientfd, buf, strlen(buf));
-        read(clientfd, buf, MAXLINE);
-        fputs(buf, stdout);
-    }
-    close(clientfd);
+
     char inp[INP_SIZE];
+    char output[INP_SIZE];
     while (true) {
         printf("> ");   // get command
         fflush(stdout);
 
         // Parse argv from input
         fgets(inp, INP_SIZE, stdin); 
-        inp[strlen(inp) - 1] = '\0';
-        //printf("%s\n", inp);
-        char *tmp = strtok(inp, " ");
-        if (tmp == NULL) {
-            // printf("MAIN 2");
-            continue;
-        }
-        //tokenize input
-        char *args[50];
-        int num_args = 0;
-        while (tmp != NULL) {
-            // printf("MAIN 3");
-            args[num_args] = strdup(tmp);
-            num_args += 1;
-            tmp = strtok(NULL, " ");
-        }
+        printf("INP %s \n", inp);
+
         // Commands
-        if (strcmp(args[0], "quit") == 0) {
+        if (strstr(inp, "quit")) {
             // printf("MAIN 4");
+            close(clientfd);
             break;
         }else{
-            
+            write(clientfd, inp, strlen(inp));
+            read(clientfd, output, INP_SIZE);
+
+            fputs(output, stdout);
+            printf("\n");
         }
     }
 }
