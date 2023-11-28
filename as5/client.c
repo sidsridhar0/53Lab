@@ -52,10 +52,10 @@ int main(int argc, char **argv) {
     clientfd= open_clientfd(host, port);
 
     char inp[INP_SIZE];
-    char output[INP_SIZE];
     while (true) {
         printf("> ");   // get command
         fflush(stdout);
+        char output[INP_SIZE];
 
         // Parse argv from input
         fgets(inp, INP_SIZE, stdin); 

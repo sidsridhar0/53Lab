@@ -9,10 +9,33 @@ typedef struct sockaddr SA;
 #include <sys/socket.h>
 #include <netdb.h>
 
-float get_data(){
-    
+char *stock_list[50];
+
+char *make_list() {
+    char *print_list = (char *)malloc(MAXLINE);
+    print_list[0] = '\0';
+
+    for (int i = 0; i < 50 && stock_list[i] != NULL; i++) {
+        strcat(print_list, stock_list[i]);
+        strcat(print_list, " | ");
+    }
+    print_list[strlen(print_list) - 2] = '\0';
+    return print_list;
 }
- 
+
+char *get_price(char **argv) {
+    return NULL;
+}
+
+char *max_profit(char **argv) {
+    return NULL;
+}
+
+void load_data(int argc, char **argv) {
+    for (int i = 1; i < argc - 1; i++) {
+        stock_list[i - 1] = argv[i];
+    }
+}
 
 int open_listenfd(char *port) {
     struct addrinfo hints, *listp, *p;
@@ -70,6 +93,7 @@ void handle_commands(int connfd) {
             // printf("MAIN 2");
             continue;
         }
+
         //tokenize input
         char *args[50];
         int num_args = 0;
@@ -80,15 +104,31 @@ void handle_commands(int connfd) {
             tmp = strtok(NULL, " ");
         }
         memset(buf, 0, sizeof(buf));
+        args[0][strlen(args[0]) - 1] = '\0';
 
         if(strstr(args[0], "quit")){
             exit(0);
         }else{
-            write(connfd, args[0], strlen(args[0]));
-            int len = strlen(args[0]);
-            printf("INP %s %d \n", args[0], len);
+            //commands
+            if(strstr(args[0], "List")){
+                printf("COMMAND List \n");
+                char *print_list = make_list();
+                free(print_list);
+                write(connfd, print_list, strlen(print_list));
+            }else if(strstr(args[0], "Prices")){
+                char* price = get_price(args);
+                write(connfd, price, sizeof(price));
+                printf("COMMAND Price %s\n", args[1]);
+            }else if(strstr(args[0], "MaxProfit")){
+                char* max_prof = max_profit(args);
+                write(connfd, max_prof, strlen(max_prof));
+                printf("COMMAND Max Profit %s\n", args[1]);
+            }else{
+                char* inv_syn = "Invalid syntax";
+                write(connfd, inv_syn, strlen(inv_syn));
+            }
         }
-
+        fflush(stdout);
     }
 }
 
@@ -100,13 +140,14 @@ int main(int argc, char **argv) {
     struct sockaddr_storage clientaddr; /* Enough room for any addr */
     char client_hostname[MAXLINE], client_port[MAXLINE];
 
-    if (argc != 2) {
+    if (argc < 2) {
         fprintf(stderr, "Usage: %s <port>\n", argv[0]);
         exit(1);
     }
+    load_data(argc, argv);
 
-    printf("opening port\n");
-    listenfd = open_listenfd(argv[1]);
+    printf("server started\n");
+    listenfd = open_listenfd(argv[argc - 1]);
     printf("listenfd: %d \n", listenfd);
     if (listenfd < 0) {
         fprintf(stderr, "Error opening listening socket\n");
