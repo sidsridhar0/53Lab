@@ -24,7 +24,11 @@ char *make_list() {
 }
 
 char *get_price(char **argv) {
-    return NULL;
+
+    char *print_statement;
+    sprintf(print_statement, "STOCK %s DATE %s\n", argv[1], argv[2]);
+    printf("%s", print_statement);
+    return print_statement;
 }
 
 char *max_profit(char **argv) {
@@ -33,6 +37,7 @@ char *max_profit(char **argv) {
 
 void load_data(int argc, char **argv) {
     for (int i = 1; i < argc - 1; i++) {
+        argv[i][strlen(argv[i]) - 4] = '\0';
         stock_list[i - 1] = argv[i];
     }
 }
@@ -104,25 +109,23 @@ void handle_commands(int connfd) {
             tmp = strtok(NULL, " ");
         }
         memset(buf, 0, sizeof(buf));
-        args[0][strlen(args[0]) - 1] = '\0';
+        //args[0][strlen(args[0]) - 1] = '\0';
 
         if(strstr(args[0], "quit")){
             exit(0);
         }else{
             //commands
+            printf("%s", args[0]);
             if(strstr(args[0], "List")){
-                printf("COMMAND List \n");
                 char *print_list = make_list();
                 free(print_list);
                 write(connfd, print_list, strlen(print_list));
             }else if(strstr(args[0], "Prices")){
                 char* price = get_price(args);
                 write(connfd, price, sizeof(price));
-                printf("COMMAND Price %s\n", args[1]);
             }else if(strstr(args[0], "MaxProfit")){
                 char* max_prof = max_profit(args);
                 write(connfd, max_prof, strlen(max_prof));
-                printf("COMMAND Max Profit %s\n", args[1]);
             }else{
                 char* inv_syn = "Invalid syntax";
                 write(connfd, inv_syn, strlen(inv_syn));
