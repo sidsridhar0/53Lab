@@ -59,9 +59,9 @@ int open_listenfd(char *port) {
     return listenfd;
 }
 
-void echo(int connfd) {
+void handle_commands(int connfd) {
     size_t n;
-    char buf[MAXLINE];
+    char buf[MAXLINE] = "";
     while((n = read(connfd, buf, MAXLINE)) != 0) {
         printf("server received %d bytes\n", (int)n);
 
@@ -79,11 +79,16 @@ void echo(int connfd) {
             num_args += 1;
             tmp = strtok(NULL, " ");
         }
+        memset(buf, 0, sizeof(buf));
 
-        for(int i = 0; i < num_args; i++){
-            printf("%s", args[i]);
-            write(connfd, args[i], n);
+        if(strstr(args[0], "quit")){
+            exit(0);
+        }else{
+            write(connfd, args[0], strlen(args[0]));
+            int len = strlen(args[0]);
+            printf("INP %s %d \n", args[0], len);
         }
+
     }
 }
 
@@ -119,7 +124,7 @@ int main(int argc, char **argv) {
         getnameinfo((SA *)&clientaddr, clientlen, client_hostname, MAXLINE, client_port, MAXLINE, 0);
         printf("Connected to (%s, %s)\n", client_hostname, client_port);
 
-        echo(connfd);  // Handle the connection
+        handle_commands(connfd);
 
         close(connfd);
     }

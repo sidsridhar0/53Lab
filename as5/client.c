@@ -59,11 +59,11 @@ int main(int argc, char **argv) {
 
         // Parse argv from input
         fgets(inp, INP_SIZE, stdin); 
-        printf("INP %s \n", inp);
 
         // Commands
         if (strstr(inp, "quit")) {
             // printf("MAIN 4");
+            write(clientfd, inp, strlen(inp));
             close(clientfd);
             break;
         }else{
