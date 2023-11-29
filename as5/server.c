@@ -1,5 +1,5 @@
 #define _POSIX_C_SOURCE 201712L
-#define MAXLINE 8192
+#define MAXLINE 256
 typedef struct sockaddr SA;
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +10,30 @@ typedef struct sockaddr SA;
 #include <netdb.h>
 
 char *stock_list[50];
+
+//struct Stockdata stockdata_list[10][350];
+
+// typedef struct {
+//     char date[11];
+//     double close;
+// } StockDay;
+
+// typedef struct {
+//     char* stock_name;
+//     struct StockDay stock_days[300];
+// } Stock;
+
+// struct Stock master_stocks[50];
+
+// void parse_csv(const char *file_path){
+//     FILE *file = fopen(file_path, "r");
+//     if (!file) {
+//         perror("Error opening file");
+//         exit(1);
+//     }else{
+        
+//     }
+// }
 
 char *make_list() {
     char *print_list = (char *)malloc(MAXLINE);
@@ -23,24 +47,26 @@ char *make_list() {
     return print_list;
 }
 
-char *get_price(char **argv) {
-
+char* get_price(char **argv) {
+    return NULL;
     char *print_statement;
-    sprintf(print_statement, "STOCK %s DATE %s\n", argv[1], argv[2]);
-    printf("%s", print_statement);
     return print_statement;
 }
 
-char *max_profit(char **argv) {
+char* max_profit(char **argv) {
     return NULL;
+    char* max_prof1 = "test";
+    return max_prof1;
 }
 
 void load_data(int argc, char **argv) {
     for (int i = 1; i < argc - 1; i++) {
         argv[i][strlen(argv[i]) - 4] = '\0';
         stock_list[i - 1] = argv[i];
+        //stockdata_list[i - 1] = 
     }
 }
+
 
 int open_listenfd(char *port) {
     struct addrinfo hints, *listp, *p;
@@ -91,11 +117,10 @@ void handle_commands(int connfd) {
     size_t n;
     char buf[MAXLINE] = "";
     while((n = read(connfd, buf, MAXLINE)) != 0) {
-        printf("server received %d bytes\n", (int)n);
+        printf("%s", buf);
 
         char *tmp = strtok(buf, " ");
         if (tmp == NULL) {
-            // printf("MAIN 2");
             continue;
         }
 
@@ -103,31 +128,32 @@ void handle_commands(int connfd) {
         char *args[50];
         int num_args = 0;
         while (tmp != NULL) {
-            // printf("MAIN 3");
             args[num_args] = strdup(tmp);
             num_args += 1;
             tmp = strtok(NULL, " ");
         }
         memset(buf, 0, sizeof(buf));
-        //args[0][strlen(args[0]) - 1] = '\0';
 
         if(strstr(args[0], "quit")){
             exit(0);
         }else{
             //commands
-            printf("%s", args[0]);
             if(strstr(args[0], "List")){
                 char *print_list = make_list();
-                free(print_list);
                 write(connfd, print_list, strlen(print_list));
-            }else if(strstr(args[0], "Prices")){
-                char* price = get_price(args);
-                write(connfd, price, sizeof(price));
-            }else if(strstr(args[0], "MaxProfit")){
-                char* max_prof = max_profit(args);
+                free(print_list);
+            } else if (strstr(args[0], "Prices")) {
+                printf("Flag 1");
+                char *price = get_price(args);
+                printf("Flag 2");
+                write(connfd, price, strlen(price));
+                printf("Flag 3");
+                free(price);
+            } else if (strstr(args[0], "MaxProfit")) {
+                char *max_prof = max_profit(args);
                 write(connfd, max_prof, strlen(max_prof));
-            }else{
-                char* inv_syn = "Invalid syntax";
+            } else {
+                char *inv_syn = "Invalid syntax";
                 write(connfd, inv_syn, strlen(inv_syn));
             }
         }
@@ -151,27 +177,24 @@ int main(int argc, char **argv) {
 
     printf("server started\n");
     listenfd = open_listenfd(argv[argc - 1]);
-    printf("listenfd: %d \n", listenfd);
     if (listenfd < 0) {
         fprintf(stderr, "Error opening listening socket\n");
         exit(1);
     }
 
-    while (1) {
-        clientlen = sizeof(struct sockaddr_storage);
-        connfd = accept(listenfd, (SA *)&clientaddr, &clientlen);
-        if (connfd < 0) {
-            fprintf(stderr, "Error accepting connection\n");
-            continue;  // Continue to the next iteration of the loop
-        }
-
-        getnameinfo((SA *)&clientaddr, clientlen, client_hostname, MAXLINE, client_port, MAXLINE, 0);
-        printf("Connected to (%s, %s)\n", client_hostname, client_port);
-
-        handle_commands(connfd);
-
+    clientlen = sizeof(struct sockaddr_storage);
+    connfd = accept(listenfd, (SA *)&clientaddr, &clientlen);
+    if (connfd < 0) {
+        fprintf(stderr, "Error accepting connection\n");
         close(connfd);
+        exit(0);
     }
+
+    getnameinfo((SA *)&clientaddr, clientlen, client_hostname, MAXLINE, client_port, MAXLINE, 0);
+
+    handle_commands(connfd);
+
+    close(connfd);
 
     exit(0);
 }
