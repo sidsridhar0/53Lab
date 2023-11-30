@@ -9,38 +9,56 @@ typedef struct sockaddr SA;
 #include <sys/socket.h>
 #include <netdb.h>
 
-char *stock_list[50];
 
-//struct Stockdata stockdata_list[10][350];
+struct StockDay {
+    char date[11];
+    double close;
+};
 
-// typedef struct {
-//     char date[11];
-//     double close;
-// } StockDay;
+struct Stock {
+    char name[30];
+    struct StockDay stock_days[300];
+};
 
-// typedef struct {
-//     char* stock_name;
-//     struct StockDay stock_days[300];
-// } Stock;
+struct Stock data[10];
+int num_data = 0;
 
-// struct Stock master_stocks[50];
+void parse_csv(char *file_path, struct StockDay stock_days[300]){
+    FILE *file = fopen(file_path, "r");
+    if (!file) {
+        perror("Error opening file");
+        exit(1);
+    }
 
-// void parse_csv(const char *file_path){
-//     FILE *file = fopen(file_path, "r");
-//     if (!file) {
-//         perror("Error opening file");
-//         exit(1);
-//     }else{
-        
-//     }
-// }
+    char line[1024];
+    fgets(line, sizeof(line), file);
+    for(int i = 0; i<300; i++){
+        if (fgets(line, sizeof(line), file)) {
+            sscanf(line, "%10[^,],%*lf,%*lf,%*lf,%lf,%*lf,%*lld", stock_days[i].date, &stock_days[i].close);
+        }
+    }
+    fclose(file);
+}
+
+void load_data(int argc, char **argv) {
+    for (int i = 1; i < argc - 1; i++) {
+        num_data++;
+        size_t length = strlen(argv[i]) + 1;
+        char *stock_name = (char *)malloc(length);
+        strcpy(stock_name, argv[i]);
+        stock_name[length-5] = '\0';
+
+        strcpy(data[i-1].name, stock_name);
+        parse_csv(argv[i], data[i-1].stock_days);
+    }
+}
 
 char *make_list() {
     char *print_list = (char *)malloc(MAXLINE);
     print_list[0] = '\0';
 
-    for (int i = 0; i < 50 && stock_list[i] != NULL; i++) {
-        strcat(print_list, stock_list[i]);
+    for (int i = 0; i < num_data; i++) {
+        strcat(print_list, data[i].name);
         strcat(print_list, " | ");
     }
     print_list[strlen(print_list) - 2] = '\0';
@@ -48,23 +66,58 @@ char *make_list() {
 }
 
 char* get_price(char **argv) {
-    return NULL;
-    char *print_statement;
+    argv[2][strlen(argv[2])-1] = '\0';
+    char* print_statement = (char *)malloc(MAXLINE);
+    strcpy(print_statement, "No matching stock date found");
+    for(int i = 0; i < num_data;i++){
+        if(strcmp(data[i].name,argv[1]) == 0){
+            for(int j = 0; j<300; j++){
+                // printf("%s -- %s\n", data[i].stock_days[j].date, argv[2]);
+                if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){
+                    sprintf(print_statement, "%.2f", data[i].stock_days[j].close);
+                    break;
+                }
+            }
+            break;
+        }
+    }
     return print_statement;
 }
 
 char* max_profit(char **argv) {
-    return NULL;
-    char* max_prof1 = "test";
-    return max_prof1;
-}
-
-void load_data(int argc, char **argv) {
-    for (int i = 1; i < argc - 1; i++) {
-        argv[i][strlen(argv[i]) - 4] = '\0';
-        stock_list[i - 1] = argv[i];
-        //stockdata_list[i - 1] = 
+    argv[3][strlen(argv[3])-1] = '\0';
+    char* max_prof = (char *)malloc(MAXLINE);
+    strcpy(max_prof, "Invalid dates");
+    double max_val = 0;
+    int start = -1;
+    int end = -1;
+    for(int i = 0; i < num_data;i++){
+        if(strcmp(data[i].name,argv[1]) == 0){
+            for(int j = 0; j<300; j++){
+                if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){
+                    start = j;
+                }
+                printf("%s ---- %s", data[i].stock_days[j].date, argv[3]);
+                if(strcmp(data[i].stock_days[j].date, argv[3]) == 0){
+                    end = j;
+                    break;
+                }
+            }
+            if(start == -1 || end == -1){
+                return max_prof;
+            }
+            for(int j = start; j < end+1; j++){
+                for(int k = j; k < end+1; k++){
+                    if(data[i].stock_days[k].close - data[i].stock_days[j].close > max_val){
+                        max_val = data[i].stock_days[k].close - data[i].stock_days[j].close;
+                    }
+                }
+            }
+            sprintf(max_prof, "%.2f", max_val);
+            break;
+        }
     }
+    return max_prof;
 }
 
 
@@ -143,15 +196,13 @@ void handle_commands(int connfd) {
                 write(connfd, print_list, strlen(print_list));
                 free(print_list);
             } else if (strstr(args[0], "Prices")) {
-                printf("Flag 1");
                 char *price = get_price(args);
-                printf("Flag 2");
                 write(connfd, price, strlen(price));
-                printf("Flag 3");
                 free(price);
             } else if (strstr(args[0], "MaxProfit")) {
                 char *max_prof = max_profit(args);
                 write(connfd, max_prof, strlen(max_prof));
+                free(max_prof);
             } else {
                 char *inv_syn = "Invalid syntax";
                 write(connfd, inv_syn, strlen(inv_syn));
