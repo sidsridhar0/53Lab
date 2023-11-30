@@ -1,3 +1,6 @@
+//Siddharthen Sridhar 95532627
+//Rohan Joseph Jayasekara 37328564
+
 #define _POSIX_C_SOURCE 201712L
 #define MAXLINE 256 // Size of the message must not 256 bytes
 typedef struct sockaddr SA;
@@ -79,7 +82,7 @@ char* get_price(char **argv) {
     // Gives the price for a specific day for a specific stock
     argv[2][strlen(argv[2])-1] = '\0';
     char* print_statement = (char *)malloc(MAXLINE);
-    strcpy(print_statement, "No matching stock date found");
+    strcpy(print_statement, "Unknown");
     for(int i = 0; i < num_data;i++){
         if(strcmp(data[i].name,argv[1]) == 0){ // Finds matching stock name
             for(int j = 0; j<300; j++){
@@ -99,7 +102,7 @@ char* max_profit(char **argv) {
     // Calculates max profits between two dates
     argv[3][strlen(argv[3])-1] = '\0';
     char* max_prof = (char *)malloc(MAXLINE);
-    strcpy(max_prof, "Invalid dates");
+    strcpy(max_prof, "Unkown");
     double max_val = 0;
     int start = -1;
     int end = -1;
@@ -228,7 +231,7 @@ int main(int argc, char **argv) {
 
     int listenfd, connfd;
     socklen_t clientlen;
-    struct sockaddr_storage clientaddr; /* Enough room for any addr */
+    struct sockaddr_storage clientaddr;
     char client_hostname[MAXLINE], client_port[MAXLINE];
 
     if (argc < 2) {
@@ -253,10 +256,7 @@ int main(int argc, char **argv) {
     }
 
     getnameinfo((SA *)&clientaddr, clientlen, client_hostname, MAXLINE, client_port, MAXLINE, 0);
-
     handle_commands(connfd);
-
     close(connfd);
-
     exit(0);
 }
