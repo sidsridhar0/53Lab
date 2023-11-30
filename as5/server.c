@@ -97,7 +97,6 @@ char* max_profit(char **argv) {
                 if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){
                     start = j;
                 }
-                printf("%s ---- %s", data[i].stock_days[j].date, argv[3]);
                 if(strcmp(data[i].stock_days[j].date, argv[3]) == 0){
                     end = j;
                     break;
