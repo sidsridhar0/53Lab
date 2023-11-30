@@ -1,5 +1,5 @@
 #define _POSIX_C_SOURCE 201712L
-#define MAXLINE 256
+#define MAXLINE 256 // Size of the message must not 256 bytes
 typedef struct sockaddr SA;
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,20 +10,22 @@ typedef struct sockaddr SA;
 #include <netdb.h>
 
 
-struct StockDay {
+struct StockDay { // Line from csv file
     char date[11];
     double close;
 };
 
-struct Stock {
+struct Stock { // Stock name + csv info
     char name[30];
     struct StockDay stock_days[300];
 };
 
-struct Stock data[10];
+struct Stock data[10]; // List of Stocks [TSLA, MSFT]
 int num_data = 0;
 
-void parse_csv(char *file_path, struct StockDay stock_days[300]){
+void parse_csv(char *file_path, struct StockDay stock_days[300]){ 
+    // Populates stock_days list with data from csv file
+
     FILE *file = fopen(file_path, "r");
     if (!file) {
         perror("Error opening file");
@@ -34,13 +36,20 @@ void parse_csv(char *file_path, struct StockDay stock_days[300]){
     fgets(line, sizeof(line), file);
     for(int i = 0; i<300; i++){
         if (fgets(line, sizeof(line), file)) {
+
+            //! WORKS
             sscanf(line, "%10[^,],%*lf,%*lf,%*lf,%lf,%*lf,%*lld", stock_days[i].date, &stock_days[i].close);
+            
+            //! NO WARNINGS
+            //sscanf(line, "%10[^,],%*f,%*f,%*f,%*f,%*f,%llf", stock_days[i].date, &stock_days[i].close);
+
         }
     }
     fclose(file);
 }
 
 void load_data(int argc, char **argv) {
+    // Fills data with info from csv files
     for (int i = 1; i < argc - 1; i++) {
         num_data++;
         size_t length = strlen(argv[i]) + 1;
@@ -54,6 +63,7 @@ void load_data(int argc, char **argv) {
 }
 
 char *make_list() {
+    // Creates string with all stock names in data
     char *print_list = (char *)malloc(MAXLINE);
     print_list[0] = '\0';
 
@@ -66,14 +76,15 @@ char *make_list() {
 }
 
 char* get_price(char **argv) {
+    // Gives the price for a specific day for a specific stock
     argv[2][strlen(argv[2])-1] = '\0';
     char* print_statement = (char *)malloc(MAXLINE);
     strcpy(print_statement, "No matching stock date found");
     for(int i = 0; i < num_data;i++){
-        if(strcmp(data[i].name,argv[1]) == 0){
+        if(strcmp(data[i].name,argv[1]) == 0){ // Finds matching stock name
             for(int j = 0; j<300; j++){
                 // printf("%s -- %s\n", data[i].stock_days[j].date, argv[2]);
-                if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){
+                if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){ // Finds matching date
                     sprintf(print_statement, "%.2f", data[i].stock_days[j].close);
                     break;
                 }
@@ -85,6 +96,7 @@ char* get_price(char **argv) {
 }
 
 char* max_profit(char **argv) {
+    // Calculates max profits between two dates
     argv[3][strlen(argv[3])-1] = '\0';
     char* max_prof = (char *)malloc(MAXLINE);
     strcpy(max_prof, "Invalid dates");
@@ -92,20 +104,20 @@ char* max_profit(char **argv) {
     int start = -1;
     int end = -1;
     for(int i = 0; i < num_data;i++){
-        if(strcmp(data[i].name,argv[1]) == 0){
+        if(strcmp(data[i].name,argv[1]) == 0){ // Finds desired stock
             for(int j = 0; j<300; j++){
-                if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){
+                if(strcmp(data[i].stock_days[j].date, argv[2]) == 0){ // Finds start date pointer
                     start = j;
                 }
-                if(strcmp(data[i].stock_days[j].date, argv[3]) == 0){
+                if(strcmp(data[i].stock_days[j].date, argv[3]) == 0){ // Finds end date pointer
                     end = j;
                     break;
                 }
             }
-            if(start == -1 || end == -1){
+            if(start == -1 || end == -1){ // If start or end date not found return "Invalid dates"
                 return max_prof;
             }
-            for(int j = start; j < end+1; j++){
+            for(int j = start; j < end+1; j++){ // Look at every buy/sell date pair within range to find max_al
                 for(int k = j; k < end+1; k++){
                     if(data[i].stock_days[k].close - data[i].stock_days[j].close > max_val){
                         max_val = data[i].stock_days[k].close - data[i].stock_days[j].close;

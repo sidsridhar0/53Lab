@@ -10,7 +10,7 @@
 #include <netdb.h>
 #include <stdbool.h>
 
-#define INP_SIZE 256
+#define INP_SIZE 256 // Size of the message must not 256 bytes
 
 int open_clientfd(char *hostname, char *port) {
     int clientfd;
@@ -56,22 +56,20 @@ int main(int argc, char **argv) {
         printf("> ");   // get command
         fflush(stdout);
         char output[INP_SIZE];
+        memset(output, 0, sizeof(output));
 
         // Parse argv from input
         fgets(inp, INP_SIZE, stdin); 
 
         // Commands
         if (strstr(inp, "quit")) {
-            // printf("MAIN 4");
             write(clientfd, inp, strlen(inp));
             close(clientfd);
             break;
         }else{
             write(clientfd, inp, strlen(inp));
             read(clientfd, output, INP_SIZE);
-
-            fputs(output, stdout);
-            printf("\n");
+            printf("%s\n", output);
         }
     }
 }
